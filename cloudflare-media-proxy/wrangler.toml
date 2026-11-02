@@ -1,0 +1,8 @@
+name = "baptism-memories-media"
+main = "src/index.ts"
+compatibility_date = "2025-10-01"
+workers_dev = true
+
+# Replace this URL after deploying the Next.js app to Vercel.
+[vars]
+TOKEN_BROKER_URL = "https://YOUR-VERCEL-DOMAIN/api/internal/media-proxy/token"

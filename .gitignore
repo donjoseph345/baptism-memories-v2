@@ -1,0 +1,37 @@
+@'
+node_modules/
+.next/
+.vercel/
+.wrangler/
+
+# Environment secrets
+.env
+.env.*
+!.env.example
+
+# Cloudflare local secrets
+.dev.vars
+.dev.vars.*
+
+# Google OAuth credentials
+client_secret*.json
+google-oauth*.json
+oauth*.json
+
+# Private keys and tokens
+*.pem
+*.key
+*.token
+
+# TypeScript build cache
+*.tsbuildinfo
+
+# Test and build output
+coverage/
+test-results/
+playwright-report/
+
+# Logs and OS files
+*.log
+.DS_Store
+'@ | Set-Content -Path .gitignore -Encoding utf8
