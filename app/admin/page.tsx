@@ -65,7 +65,7 @@ export default function AdminDashboard() {
   return <main className="page-shell min-h-screen px-5 py-6 md:px-10">
     <div className="mx-auto max-w-7xl">
       <header className="flex flex-wrap items-center justify-between gap-4">
-        <Link href="/" className="serif text-xl font-semibold">little <span style={{color:'var(--gold)'}}>moments</span> ✳</Link>
+        <Link href="/" className="serif text-xl font-semibold">little <span style={{color:'var(--gold)'}}>moments</span></Link>
         <div className="flex items-center gap-4 text-sm"><Link href="/admin/settings/storage" className="inline-flex items-center gap-2 muted hover:text-black"><Settings2 size={16}/> Storage settings</Link><button onClick={signOut} className="inline-flex items-center gap-2 muted hover:text-black"><LogOut size={16}/> Sign out</button></div>
       </header>
 
@@ -109,7 +109,7 @@ export default function AdminDashboard() {
           <Link href={`/admin/events/${event.id}`} className="btn btn-outline mt-4 w-full">Manage event <ArrowRight size={16}/></Link>
         </article>)}</div>}
       </section>
-      <footer className="mt-12 flex flex-wrap items-center justify-between gap-3 border-t py-6 text-xs muted" style={{borderColor:'var(--line)'}}><span>little moments ✳</span><Link href="/admin/settings/storage" className="underline underline-offset-4">Manage Google Drive</Link><span>Admin account: donjoseph3000@gmail.com</span></footer>
+      <footer className="mt-12 flex flex-wrap items-center justify-between gap-3 border-t py-6 text-xs muted" style={{borderColor:'var(--line)'}}><span>little moments</span><Link href="/admin/settings/storage" className="underline underline-offset-4">Manage Google Drive</Link><span>Admin account: donjoseph3000@gmail.com</span></footer>
     </div>
   </main>;
 }

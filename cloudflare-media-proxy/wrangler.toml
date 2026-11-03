@@ -5,4 +5,4 @@ workers_dev = true
 
 # Replace this URL after deploying the Next.js app to Vercel.
 [vars]
-TOKEN_BROKER_URL = "https://YOUR-VERCEL-DOMAIN/api/internal/media-proxy/token"
+TOKEN_BROKER_URL = "https://the-little-moments.vercel.app/api/internal/media-proxy/token"
