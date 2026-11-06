@@ -1,0 +1,2 @@
+ALTER TABLE public.events
+ADD COLUMN require_access_code BOOLEAN NOT NULL DEFAULT TRUE;

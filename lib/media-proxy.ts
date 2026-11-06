@@ -10,6 +10,7 @@ export type MediaProxyClaims = {
   access: 'guest' | 'admin';
   guestSessionHash?: string;
   download: boolean;
+  thumbnail?: boolean;
   exp: number;
 };
 
@@ -42,6 +43,7 @@ export function verifyMediaProxyToken(token: string): MediaProxyClaims | null {
     if (payload.accountType !== 'photos' && payload.accountType !== 'videos') return null;
     if (payload.access !== 'guest' && payload.access !== 'admin') return null;
     if (payload.access === 'guest' && !/^[a-f0-9]{64}$/i.test(payload.guestSessionHash || '')) return null;
+    if (payload.thumbnail !== undefined && typeof payload.thumbnail !== 'boolean') return null;
     if (!Number.isInteger(payload.exp) || payload.exp <= Math.floor(Date.now() / 1000)) return null;
     return payload;
   } catch { return null; }

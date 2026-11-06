@@ -2,10 +2,20 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { decryptSecret } from '@/lib/security';
 
 export type DriveAccountType = 'photos' | 'videos';
-export type DriveFile = { id: string; name?: string; mimeType?: string; size?: string; webViewLink?: string; thumbnailLink?: string };
+export type DriveFile = {
+  id: string;
+  name?: string;
+  mimeType?: string;
+  size?: string;
+  webViewLink?: string;
+  thumbnailLink?: string;
+  thumbnailVersion?: string;
+};
 
 type CachedAccessToken = { value: string; expiresAt: number };
 const accessTokenCache = new Map<DriveAccountType, CachedAccessToken>();
+const thumbnailLinkCache = new Map<string, { value: string | null; expiresAt: number }>();
+const THUMBNAIL_LINK_CACHE_MS = 15 * 60 * 1000;
 
 export function clearDriveAccessTokenCache(type?: DriveAccountType) {
   if (type) accessTokenCache.delete(type);
@@ -171,6 +181,69 @@ export async function getDriveUploadStatus(args: { type: DriveAccountType; sessi
   if (response.status === 404 || response.status === 410) throw new Error('The resumable upload session has expired. Please select the file and try again.');
   const message = await response.text().catch(() => '');
   throw new Error(`Could not resume Google Drive upload (HTTP ${response.status}). ${message.slice(0, 300)}`);
+}
+
+export async function getDriveThumbnailLink(type: DriveAccountType, fileId: string): Promise<string | null> {
+  const cacheKey = `${type}:${fileId}`;
+  const cached = thumbnailLinkCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) return cached.value;
+
+  const token = await getDriveAccessToken(type);
+  const metadata = await driveJson<Pick<DriveFile, 'thumbnailLink'>>(
+    token,
+    `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?fields=thumbnailLink`
+  );
+  const thumbnailLink = typeof metadata.thumbnailLink === 'string' ? metadata.thumbnailLink : null;
+  if (thumbnailLinkCache.size >= 1000) {
+    const oldestKey = thumbnailLinkCache.keys().next().value;
+    if (oldestKey) thumbnailLinkCache.delete(oldestKey);
+  }
+  thumbnailLinkCache.set(cacheKey, {
+    value: thumbnailLink,
+    // A missing video thumbnail may become available after Drive finishes
+    // processing the upload; retry missing entries much sooner.
+    expiresAt: Date.now() + (thumbnailLink ? THUMBNAIL_LINK_CACHE_MS : 30_000),
+  });
+  return thumbnailLink;
+}
+
+function isAllowedGoogleThumbnailUrl(value: string): URL | null {
+  try {
+    const url = new URL(value);
+    const hostname = url.hostname.toLowerCase();
+    const allowedHost = hostname === 'drive.google.com' || hostname === 'googleusercontent.com' || hostname.endsWith('.googleusercontent.com');
+    return url.protocol === 'https:' && allowedHost ? url : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function getDriveThumbnailResponse(type: DriveAccountType, fileId: string): Promise<Response | null> {
+  const thumbnailLink = await getDriveThumbnailLink(type, fileId);
+  if (!thumbnailLink) return null;
+  const url = isAllowedGoogleThumbnailUrl(thumbnailLink);
+  if (!url) throw new Error('Google Drive returned an unexpected thumbnail URL.');
+
+  const accessToken = await getDriveAccessToken(type);
+  const response = await fetch(url, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    redirect: 'follow',
+    cache: 'no-store',
+  });
+  if (!response.ok) return null;
+  if (response.url && !isAllowedGoogleThumbnailUrl(response.url)) return null;
+  const contentType = response.headers.get('content-type') || 'image/jpeg';
+  if (!/^image\/(?:jpeg|png|webp|gif)$/i.test(contentType)) return null;
+
+  return new Response(response.body, {
+    status: 200,
+    headers: {
+      'Content-Type': contentType,
+      'Cache-Control': 'private, no-store',
+      'X-Content-Type-Options': 'nosniff',
+      'Content-Disposition': 'inline',
+    },
+  });
 }
 
 export async function trashDriveFile(type: DriveAccountType, fileId: string) {

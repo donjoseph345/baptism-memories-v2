@@ -1,0 +1,3 @@
+ALTER TABLE public.events
+ADD COLUMN allow_photo_uploads BOOLEAN NOT NULL DEFAULT TRUE,
+ADD COLUMN allow_video_uploads BOOLEAN NOT NULL DEFAULT TRUE;
